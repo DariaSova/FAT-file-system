@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 struct Superblock {
   uint64_t system_id;
   uint16_t block_size;
