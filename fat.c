@@ -82,17 +82,6 @@ int main ( int argc, char *argv[] )
 
   fp = fopen(disk_image, "rb");
 
-  //char buf[DEAFAULT_BLOCK_SIZE];
-  //char pointer = buf[0];
-
-  /*//read superblock
-  fseek(fp, 0, SEEK_SET);
-  fread(buf, 512, 1, fp);
-  fread(buf2, 2, 1, fp);
-  //printf("%d\n", buf2);
-  //superblock->system_id = buf;
-  printf("SIZE: %d\n", superblock->system_id);
-*/
   char system_name[30];
   int size = 0;
   int blocks_num = 0;
@@ -116,5 +105,43 @@ int main ( int argc, char *argv[] )
   printf("Root Directory start: %d\n", root_dir_start);
   root_dir_blocks = getRootDirBlocks(fp);
   printf("Root directory blocks: %d\n", root_dir_blocks);
+
+  //READ FAT BLOCK
+  unsigned char buf[DEFAULT_BLOCK_SIZE];
+  fseek(fp, DEFAULT_BLOCK_SIZE, SEEK_SET);
+  fread(buf, 512, 1, fp);
+  
+  int free_blocks_counter = 0;
+  int reserved_blocks_counter = 0;
+  int allocated_blocks_counter = 0;
+
+  //for every entry in a FAT block
+  ///for(int i=0; i< fat_blocks; i++)
+  //{
+    int pointer = 0;
+    for(int j=0; j< DEFAULT_BLOCK_SIZE/FAT_ENTRY_SIZE; j++)
+    {
+      uint32_t* entry = (uint32_t*)&buf[pointer]; //fat entry size
+      uint32_t result = ntohl(*entry);
+      //printf("Entry: %08X\n", result);
+
+      switch(result)
+      {
+        case FAT_FREE:
+          free_blocks_counter++;
+          break;
+        case FAT_RESERVED:
+          reserved_blocks_counter++;
+          break;
+        default:
+          allocated_blocks_counter++;
+        break;
+      }
+      pointer+=FAT_ENTRY_SIZE;
+    }
+    printf("FREE: %d\n", free_blocks_counter);
+
+  //}
+
   fclose(fp);
 }
