@@ -107,18 +107,20 @@ int main ( int argc, char *argv[] )
   printf("Root directory blocks: %d\n", root_dir_blocks);
 
   //READ FAT BLOCK
+  //int current_block = fat_starts;
   unsigned char buf[DEFAULT_BLOCK_SIZE];
-  fseek(fp, DEFAULT_BLOCK_SIZE, SEEK_SET);
-  fread(buf, 512, 1, fp);
   
   int free_blocks_counter = 0;
   int reserved_blocks_counter = 0;
   int allocated_blocks_counter = 0;
 
   //for every entry in a FAT block
-  ///for(int i=0; i< fat_blocks; i++)
-  //{
+  for(int i= fat_starts; i<= fat_blocks; i++)
+  {
+    fseek(fp, i*DEFAULT_BLOCK_SIZE, SEEK_SET);
+    fread(buf, 512, 1, fp);
     int pointer = 0;
+
     for(int j=0; j< DEFAULT_BLOCK_SIZE/FAT_ENTRY_SIZE; j++)
     {
       uint32_t* entry = (uint32_t*)&buf[pointer]; //fat entry size
@@ -139,9 +141,8 @@ int main ( int argc, char *argv[] )
       }
       pointer+=FAT_ENTRY_SIZE;
     }
-    printf("FREE: %d\n", free_blocks_counter);
-
-  //}
+  }
+  printf("FREE: %d\n", free_blocks_counter);
 
   fclose(fp);
 }
