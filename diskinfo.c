@@ -73,7 +73,6 @@ int main ( int argc, char *argv[] )
 
   fp = fopen(disk_image, "rb");
 
-  unsigned char system_name[30];
   uint32_t size = 0;
   uint32_t blocks_num = 0;
   uint32_t fat_starts = 0;
@@ -82,8 +81,6 @@ int main ( int argc, char *argv[] )
   uint32_t root_dir_start = 0;
 
   printf("Super block information:\n");
-  get_name(fp, system_name);
-  printf("File system identifier: %s\n", system_name);
   size = get_block_size(fp);
   printf("Block size: %d\n", size);
   blocks_num = get_blocks_num(fp);

@@ -1,7 +1,7 @@
 CFLAGS = -Wall -g -std=c99  
 LDFLAGS = -lreadline
 
-OBJS = fat.o
+OBJS = diskinfo.o
 
 all: diskinfo
 
