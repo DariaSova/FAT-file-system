@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include "fat.h"
 #include "constants.h"
+#include <arpa/inet.h>
 
 void getName(FILE *fp, char *name)
 {
@@ -10,6 +11,15 @@ void getName(FILE *fp, char *name)
 }
 
 int getBlockSize(FILE *fp)
+{
+  uint16_t size;
+  fseek(fp, BLOCKSIZE_OFFSET, SEEK_SET);
+  fread(&size, 2, 1, fp);
+  size = htons(size);
+  return size;
+};
+
+int getBlocksNum(FILE *fp)
 {
   //Little Endian case
   int retVal;
