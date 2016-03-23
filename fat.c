@@ -107,13 +107,13 @@ int main ( int argc, char *argv[] )
   printf("Root directory blocks: %d\n", root_dir_blocks);
 
   //READ FAT BLOCK
-  //int current_block = fat_starts;
   unsigned char buf[DEFAULT_BLOCK_SIZE];
   
   int free_blocks_counter = 0;
   int reserved_blocks_counter = 0;
   int allocated_blocks_counter = 0;
 
+  printf("\nFAT information:\n");
   //for every entry in a FAT block
   for(int i= fat_starts; i<= fat_blocks; i++)
   {
@@ -123,9 +123,8 @@ int main ( int argc, char *argv[] )
 
     for(int j=0; j< DEFAULT_BLOCK_SIZE/FAT_ENTRY_SIZE; j++)
     {
-      uint32_t* entry = (uint32_t*)&buf[pointer]; //fat entry size
+      uint32_t* entry = (uint32_t*)&buf[pointer];
       uint32_t result = ntohl(*entry);
-      //printf("Entry: %08X\n", result);
 
       switch(result)
       {
@@ -142,7 +141,9 @@ int main ( int argc, char *argv[] )
       pointer+=FAT_ENTRY_SIZE;
     }
   }
-  printf("FREE: %d\n", free_blocks_counter);
+  printf("Free Blocks: %d\n", free_blocks_counter);
+  printf("Reserved Blocks: %d\n", reserved_blocks_counter);
+  printf("Allocated Blocks: %d\n", allocated_blocks_counter);
 
   fclose(fp);
 }
