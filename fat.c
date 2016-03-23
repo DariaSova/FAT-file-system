@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <arpa/inet.h>
-#include "fat.h"
 #include "constants.h"
 
 void get_name(FILE *fp, unsigned char *name)
@@ -15,8 +14,7 @@ uint32_t get_block_size(FILE *fp)
   uint16_t size;
   fseek(fp, BLOCKSIZE_OFFSET, SEEK_SET);
   fread(&size, 2, 1, fp);
-  size = htons(size);
-  return size;
+  return htons(size);
 };
 
 uint32_t get_blocks_num(FILE *fp)
@@ -24,8 +22,7 @@ uint32_t get_blocks_num(FILE *fp)
   uint32_t blocks_num;
   fseek(fp, BLOCKCOUNT_OFFSET, SEEK_SET);
   fread(&blocks_num, 4, 1, fp);
-  blocks_num = ntohl(blocks_num);
-  return blocks_num;
+  return ntohl(blocks_num);
 };
 
 uint32_t get_FAT_start(FILE *fp)
@@ -33,8 +30,7 @@ uint32_t get_FAT_start(FILE *fp)
   uint32_t fat_starts;
   fseek(fp, FATSTART_OFFSET, SEEK_SET);
   fread(&fat_starts, 4, 1, fp);
-  fat_starts = ntohl(fat_starts);
-  return fat_starts;
+  return ntohl(fat_starts);
 };
 
 uint32_t get_FAT_blocks(FILE *fp)
@@ -42,8 +38,7 @@ uint32_t get_FAT_blocks(FILE *fp)
   uint32_t fat;
   fseek(fp, FATBLOCKS_OFFSET, SEEK_SET);
   fread(&fat, 4, 1, fp);
-  fat = ntohl(fat);
-  return fat;
+  return ntohl(fat);
 };
 
 uint32_t get_rootdir_start(FILE *fp)
@@ -51,8 +46,7 @@ uint32_t get_rootdir_start(FILE *fp)
   uint32_t dir_start;
   fseek(fp, ROOTDIRSTART_OFFSET, SEEK_SET);
   fread(&dir_start, 4, 1, fp);
-  dir_start = ntohl(dir_start);
-  return dir_start;
+  return ntohl(dir_start);
 };
 
 uint32_t get_rootdir_blocks(FILE *fp)
@@ -60,8 +54,7 @@ uint32_t get_rootdir_blocks(FILE *fp)
   uint32_t root_dir;
   fseek(fp, ROOTDIRBLOCKS_OFFSET, SEEK_SET);
   fread(&root_dir, 4, 1, fp);
-  root_dir = ntohl(root_dir);
-  return root_dir;
+  return ntohl(root_dir);
 };
 
 int main ( int argc, char *argv[] )
@@ -77,8 +70,6 @@ int main ( int argc, char *argv[] )
   disk_image = argv[1];
   //read superblock
   FILE *fp;
-  struct Superblock *superblock;
-  superblock = (struct Superblock*)malloc(sizeof(superblock));
 
   fp = fopen(disk_image, "rb");
 
