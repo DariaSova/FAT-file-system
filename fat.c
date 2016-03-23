@@ -5,7 +5,7 @@
 #include "fat.h"
 #include "constants.h"
 
-void getName(FILE *fp, char *name)
+void getName(FILE *fp, unsigned char *name)
 {
   fread(name, 8, 1, fp);
 }
@@ -82,13 +82,13 @@ int main ( int argc, char *argv[] )
 
   fp = fopen(disk_image, "rb");
 
-  char system_name[30];
-  int size = 0;
-  int blocks_num = 0;
-  int fat_starts = 0;
-  int fat_blocks = 0;
-  int root_dir_blocks = 0;
-  int root_dir_start = 0;
+  unsigned char system_name[30];
+  uint32_t size = 0;
+  uint32_t blocks_num = 0;
+  uint32_t fat_starts = 0;
+  uint32_t fat_blocks = 0;
+  uint32_t root_dir_blocks = 0;
+  uint32_t root_dir_start = 0;
 
   printf("Super block information:\n");
   getName(fp, system_name);
