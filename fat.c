@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <arpa/inet.h>
 #include "fat.h"
 #include "constants.h"
-#include <arpa/inet.h>
 
 void getName(FILE *fp, char *name)
 {
   fread(name, 8, 1, fp);
 }
 
-int getBlockSize(FILE *fp)
+uint32_t getBlockSize(FILE *fp)
 {
   uint16_t size;
   fseek(fp, BLOCKSIZE_OFFSET, SEEK_SET);
@@ -19,19 +19,22 @@ int getBlockSize(FILE *fp)
   return size;
 };
 
-int getBlocksNum(FILE *fp)
+uint32_t getBlocksNum(FILE *fp)
 {
-  //Little Endian case
-  int retVal;
-  int *high = malloc(sizeof(int));
-  int *low = malloc(sizeof(int));
-  fseek(fp, BLOCKSIZE_OFFSET, SEEK_SET);
-  fread(high, 1, 1, fp);
-  fread(low, 1, 1, fp);
-  retVal = ((*high)<<8) + *low;
-  free(high);
-  free(low);
-  return retVal;
+  uint32_t blocks_num;
+  fseek(fp, BLOCKCOUNT_OFFSET, SEEK_SET);
+  fread(&blocks_num, 4, 1, fp);
+  blocks_num = ntohl(blocks_num);
+  return blocks_num;
+};
+
+uint32_t getFATst(FILE *fp)
+{
+  uint32_t fat_starts;
+  fseek(fp, FATSTART_OFFSET, SEEK_SET);
+  fread(&fat_starts, 4, 1, fp);
+  fat_starts = ntohl(fat_starts);
+  return fat_starts;
 };
 
 int main ( int argc, char *argv[] )
@@ -65,10 +68,16 @@ int main ( int argc, char *argv[] )
 */
   char system_name[30];
   int size = 0;
+  int blocks_num = 0;
+  int fat_starts = 0;
   printf("Super block information:\n");
   getName(fp, system_name);
   printf("File system identifier: %s\n", system_name);
   size = getBlockSize(fp);
   printf("Block size: %d\n", size);
+  blocks_num = getBlocksNum(fp);
+  printf("Blocks number: %d\n", blocks_num);
+  fat_starts = getFATst(fp);
+  printf("FAT starts: %d\n", fat_starts);
   fclose(fp);
 }
