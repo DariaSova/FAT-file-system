@@ -5,12 +5,12 @@
 #include "fat.h"
 #include "constants.h"
 
-void getName(FILE *fp, unsigned char *name)
+void get_name(FILE *fp, unsigned char *name)
 {
   fread(name, 8, 1, fp);
 }
 
-uint32_t getBlockSize(FILE *fp)
+uint32_t get_block_size(FILE *fp)
 {
   uint16_t size;
   fseek(fp, BLOCKSIZE_OFFSET, SEEK_SET);
@@ -19,7 +19,7 @@ uint32_t getBlockSize(FILE *fp)
   return size;
 };
 
-uint32_t getBlocksNum(FILE *fp)
+uint32_t get_blocks_num(FILE *fp)
 {
   uint32_t blocks_num;
   fseek(fp, BLOCKCOUNT_OFFSET, SEEK_SET);
@@ -28,7 +28,7 @@ uint32_t getBlocksNum(FILE *fp)
   return blocks_num;
 };
 
-uint32_t getFATst(FILE *fp)
+uint32_t get_FAT_start(FILE *fp)
 {
   uint32_t fat_starts;
   fseek(fp, FATSTART_OFFSET, SEEK_SET);
@@ -37,7 +37,7 @@ uint32_t getFATst(FILE *fp)
   return fat_starts;
 };
 
-uint32_t getFATblocks(FILE *fp)
+uint32_t get_FAT_blocks(FILE *fp)
 {
   uint32_t fat;
   fseek(fp, FATBLOCKS_OFFSET, SEEK_SET);
@@ -46,7 +46,7 @@ uint32_t getFATblocks(FILE *fp)
   return fat;
 };
 
-uint32_t getRootDirStart(FILE *fp)
+uint32_t get_rootdir_start(FILE *fp)
 {
   uint32_t dir_start;
   fseek(fp, ROOTDIRSTART_OFFSET, SEEK_SET);
@@ -55,7 +55,7 @@ uint32_t getRootDirStart(FILE *fp)
   return dir_start;
 };
 
-uint32_t getRootDirBlocks(FILE *fp)
+uint32_t get_rootdir_blocks(FILE *fp)
 {
   uint32_t root_dir;
   fseek(fp, ROOTDIRBLOCKS_OFFSET, SEEK_SET);
@@ -91,19 +91,19 @@ int main ( int argc, char *argv[] )
   uint32_t root_dir_start = 0;
 
   printf("Super block information:\n");
-  getName(fp, system_name);
+  get_name(fp, system_name);
   printf("File system identifier: %s\n", system_name);
-  size = getBlockSize(fp);
+  size = get_block_size(fp);
   printf("Block size: %d\n", size);
-  blocks_num = getBlocksNum(fp);
+  blocks_num = get_blocks_num(fp);
   printf("Blocks number: %d\n", blocks_num);
-  fat_starts = getFATst(fp);
+  fat_starts = get_FAT_start(fp);
   printf("FAT starts: %d\n", fat_starts);
-  fat_blocks = getFATblocks(fp);
+  fat_blocks = get_FAT_blocks(fp);
   printf("FAT blocks: %d\n", fat_blocks);
-  root_dir_start = getRootDirStart(fp);
+  root_dir_start = get_rootdir_start(fp);
   printf("Root Directory start: %d\n", root_dir_start);
-  root_dir_blocks = getRootDirBlocks(fp);
+  root_dir_blocks = get_rootdir_blocks(fp);
   printf("Root directory blocks: %d\n", root_dir_blocks);
 
   //READ FAT BLOCK
