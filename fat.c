@@ -37,6 +37,15 @@ uint32_t getFATst(FILE *fp)
   return fat_starts;
 };
 
+uint32_t getFATblocks(FILE *fp)
+{
+  uint32_t fat;
+  fseek(fp, FATBLOCKS_OFFSET, SEEK_SET);
+  fread(&fat, 4, 1, fp);
+  fat = ntohl(fat);
+  return fat;
+};
+
 int main ( int argc, char *argv[] )
 {
   char *disk_image;
@@ -70,6 +79,7 @@ int main ( int argc, char *argv[] )
   int size = 0;
   int blocks_num = 0;
   int fat_starts = 0;
+  int fat_blocks = 0;
   printf("Super block information:\n");
   getName(fp, system_name);
   printf("File system identifier: %s\n", system_name);
@@ -79,5 +89,7 @@ int main ( int argc, char *argv[] )
   printf("Blocks number: %d\n", blocks_num);
   fat_starts = getFATst(fp);
   printf("FAT starts: %d\n", fat_starts);
+  fat_blocks = getFATblocks(fp);
+  printf("FAT blocks: %d\n", fat_blocks);
   fclose(fp);
 }
