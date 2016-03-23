@@ -55,6 +55,15 @@ uint32_t getRootDirStart(FILE *fp)
   return dir_start;
 };
 
+uint32_t getRootDirBlocks(FILE *fp)
+{
+  uint32_t root_dir;
+  fseek(fp, ROOTDIRBLOCKS_OFFSET, SEEK_SET);
+  fread(&root_dir, 4, 1, fp);
+  root_dir = ntohl(root_dir);
+  return root_dir;
+};
+
 int main ( int argc, char *argv[] )
 {
   char *disk_image;
@@ -89,6 +98,7 @@ int main ( int argc, char *argv[] )
   int blocks_num = 0;
   int fat_starts = 0;
   int fat_blocks = 0;
+  int root_dir_blocks = 0;
   int root_dir_start = 0;
 
   printf("Super block information:\n");
@@ -104,5 +114,7 @@ int main ( int argc, char *argv[] )
   printf("FAT blocks: %d\n", fat_blocks);
   root_dir_start = getRootDirStart(fp);
   printf("Root Directory start: %d\n", root_dir_start);
+  root_dir_blocks = getRootDirBlocks(fp);
+  printf("Root directory blocks: %d\n", root_dir_blocks);
   fclose(fp);
 }
