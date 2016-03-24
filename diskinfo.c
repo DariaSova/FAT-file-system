@@ -38,44 +38,11 @@ int main ( int argc, char *argv[] )
   root_directory->blocks_num = get_rootdir_blocks(fp);
   printf("Root directory blocks: %d\n", root_directory->blocks_num);
 
-  //READ FAT BLOCK
-  unsigned char buf[DEFAULT_BLOCK_SIZE];
-  
-  int free_blocks_counter = 0;
-  int reserved_blocks_counter = 0;
-  int allocated_blocks_counter = 0;
-
+  read_FAT(fp);
   printf("\nFAT information:\n");
-  //for every entry in a FAT block
-  for(int i= FAT->first_block; i<= FAT->blocks_num; i++)
-  {
-    fseek(fp, i*DEFAULT_BLOCK_SIZE, SEEK_SET);
-    fread(buf, 512, 1, fp);
-    int pointer = 0;
-
-    for(int j=0; j< DEFAULT_BLOCK_SIZE/FAT_ENTRY_SIZE; j++)
-    {
-      uint32_t* entry = (uint32_t*)&buf[pointer];
-      uint32_t result = ntohl(*entry);
-
-      switch(result)
-      {
-        case FAT_FREE:
-          free_blocks_counter++;
-          break;
-        case FAT_RESERVED:
-          reserved_blocks_counter++;
-          break;
-        default:
-          allocated_blocks_counter++;
-        break;
-      }
-      pointer+=FAT_ENTRY_SIZE;
-    }
-  }
-  printf("Free Blocks: %d\n", free_blocks_counter);
-  printf("Reserved Blocks: %d\n", reserved_blocks_counter);
-  printf("Allocated Blocks: %d\n", allocated_blocks_counter);
+  printf("Free Blocks: %d\n", FAT->free_blocks);
+  printf("Reserved Blocks: %d\n", FAT->reserved_blocks);
+  printf("Allocated Blocks: %d\n", FAT->allocated_blocks);
 
   fclose(fp);
 }

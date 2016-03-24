@@ -50,3 +50,40 @@ uint32_t get_rootdir_blocks(FILE *fp)
   fread(&root_dir, 4, 1, fp);
   return ntohl(root_dir);
 };
+
+void read_FAT(FILE *fp)
+{
+  unsigned char buf[DEFAULT_BLOCK_SIZE];
+
+  FAT->free_blocks = 0;
+  FAT->reserved_blocks = 0;
+  FAT->allocated_blocks = 0;
+
+  //for every entry in a FAT block
+  for(int i= FAT->first_block; i<= FAT->blocks_num; i++)
+  {
+    fseek(fp, i*DEFAULT_BLOCK_SIZE, SEEK_SET);
+    fread(buf, 512, 1, fp);
+    int pointer = 0;
+
+    for(int j=0; j< DEFAULT_BLOCK_SIZE/FAT_ENTRY_SIZE; j++)
+    {
+      uint32_t* entry = (uint32_t*)&buf[pointer];
+      uint32_t result = ntohl(*entry);
+
+      switch(result)
+      {
+        case FAT_FREE:
+          FAT->free_blocks++;
+          break;
+        case FAT_RESERVED:
+          FAT->reserved_blocks++;
+          break;
+        default:
+          FAT->allocated_blocks++;
+        break;
+      }
+      pointer+=FAT_ENTRY_SIZE;
+    }
+  }
+};

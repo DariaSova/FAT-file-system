@@ -9,6 +9,9 @@ struct Superblock {
 struct FAT {
   uint32_t first_block;
   uint32_t blocks_num;
+  uint32_t free_blocks;
+  uint32_t reserved_blocks;
+  uint32_t allocated_blocks;
 };
 
 struct FDirectory {
