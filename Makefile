@@ -5,10 +5,10 @@ OBJS = diskinfo.o disklist.o
 
 all: diskinfo disklist
 
-diskinfo: $(OBJS)
-	$(CC) $(CFLAGS) -o diskinfo $(OBJS) $(LDFLAGS) 
+diskinfo: diskinfo.o
+	$(CC) $(CFLAGS) diskinfo.o -o diskinfo $(LDFLAGS) 
 
-disklist: $(OBJS)
-	$(CC) $(CFLAGS) -o disklist $(OBJS) $(LDFLAGS) 
+disklist: disklist.o
+	$(CC) $(CFLAGS) disklist.o -o disklist $(LDFLAGS) 
 clean: 
 	rm -rf $(OBJS) diskinfo disklist
