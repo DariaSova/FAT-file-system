@@ -1,14 +1,17 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <inttypes.h>
-#include <arpa/inet.h>
+#include "headers.h"
 #include "constants.h"
+#include "constants.h"
+#include "fat.h"
+#include "disk.h"
 
 int main ( int argc, char *argv[] )
 {
   char *disk_image;
+  unsigned char buf[DEFAULT_BLOCK_SIZE];
+  root_directory = (struct FDirectory*)malloc(sizeof(root_directory));
 
   if(argc != 2)
+
   {
     printf("Input Error. Usage: ./diskinfo <disk_image_file.img>\n");
     exit(-1);
@@ -20,6 +23,8 @@ int main ( int argc, char *argv[] )
 
   fp = fopen(disk_image, "rb");
 
+  root_directory->first_block = get_rootdir_start(fp);
+  root_directory->blocks_num = get_rootdir_blocks(fp);
   ///DIRECTORY
   for(int i=root_directory->first_block; i< root_directory->first_block+root_directory->blocks_num; i++)
   {

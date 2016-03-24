@@ -1,4 +1,7 @@
 #include "headers.h"
+#include "constants.h"
+#include "fat.h"
+#include "disk.h"
 
 int main ( int argc, char *argv[] )
 {
@@ -16,11 +19,8 @@ int main ( int argc, char *argv[] )
 
   fp = fopen(disk_image, "rb");
 
-  struct Superblock *superblock;
   superblock = (struct Superblock*)malloc(sizeof(superblock));
-  struct FAT *FAT;
   FAT = (struct FAT*)malloc(sizeof(FAT));
-  struct FDirectory *root_directory;
   root_directory = (struct FDirectory*)malloc(sizeof(root_directory));
 
 
