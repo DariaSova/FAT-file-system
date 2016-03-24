@@ -4,27 +4,9 @@
 #include "fat.h"
 #include "disk.h"
 
-int main ( int argc, char *argv[] )
+void read_root_directory(FILE *fp, struct FDirectory* root_directory)
 {
-  char *disk_image;
   unsigned char buf[DEFAULT_BLOCK_SIZE];
-  root_directory = (struct FDirectory*)malloc(sizeof(root_directory));
-
-  if(argc != 2)
-
-  {
-    printf("Input Error. Usage: ./diskinfo <disk_image_file.img>\n");
-    exit(-1);
-  }
-
-  disk_image = argv[1];
-  //read superblock
-  FILE *fp;
-
-  fp = fopen(disk_image, "rb");
-
-  root_directory->first_block = get_rootdir_start(fp);
-  root_directory->blocks_num = get_rootdir_blocks(fp);
   ///DIRECTORY
   for(int i=root_directory->first_block; i< root_directory->first_block+root_directory->blocks_num; i++)
   {
@@ -78,5 +60,27 @@ int main ( int argc, char *argv[] )
       }
     }
   }
+};
+
+int main ( int argc, char *argv[] )
+{
+  char *disk_image;
+  root_directory = (struct FDirectory*)malloc(sizeof(root_directory));
+
+  if(argc != 2)
+
+  {
+    printf("Input Error. Usage: ./diskinfo <disk_image_file.img>\n");
+    exit(-1);
+  }
+
+  disk_image = argv[1];
+  FILE *fp;
+
+  fp = fopen(disk_image, "rb");
+  root_directory->first_block = get_rootdir_start(fp);
+  root_directory->blocks_num = get_rootdir_blocks(fp);
+  read_root_directory(fp, root_directory);
+
   fclose(fp);
 };
