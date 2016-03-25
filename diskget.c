@@ -7,6 +7,24 @@
 void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
 {
   printf("File name: %s, First: %d, Size: %i, Blocks num: %i\n", file_name, file->first_block, file->size, file->blocks_num);
+  FILE* new_file = fopen(file_name, "wb");
+  unsigned char buf[DEFAULT_BLOCK_SIZE];
+
+  //go through all the blocks
+  for(int i=0; i<file->blocks_num; i++)
+  {
+    //read the block
+    fseek(fp, file->first_block*DEFAULT_BLOCK_SIZE, SEEK_SET);
+    fread(buf, 512, 1, fp);
+    int pointer = 0;
+    for(int j=0; j<7; j++)
+    {
+      uint8_t* current_byte = (uint8_t*)&buf[pointer]; 
+      pointer+=8;
+      fwrite(current_byte, 1, sizeof(current_byte), new_file);
+    }
+  }
+
 };
 
 void read_root_directory(FILE *fp, struct FDirectory* root_directory, struct FDirectory* file, char* search_file)
@@ -39,7 +57,7 @@ void read_root_directory(FILE *fp, struct FDirectory* root_directory, struct FDi
         for(int k=0; k<31; k++)
           file_name[k] =(char)*((uint8_t*)&buf[pointer++]);
         pointer+=6;
-       
+
         file->size = *file_size;
         file->size = ntohl(*file_size);
         file->first_block = ntohl(*first_block);
