@@ -17,6 +17,7 @@ struct FAT {
 struct FDirectory {
   uint32_t first_block;
   uint32_t blocks_num;
+  uint32_t size;
 };
 //define structs
 struct Superblock *superblock;

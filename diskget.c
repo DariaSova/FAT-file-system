@@ -4,7 +4,12 @@
 #include "fat.h"
 #include "disk.h"
 
-void read_root_directory(FILE *fp, struct FDirectory* root_directory, char* search_file)
+void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
+{
+  printf("File name: %s, First: %d, Size: %i, Blocks num: %i\n", file_name, file->first_block, file->size, file->blocks_num);
+};
+
+void read_root_directory(FILE *fp, struct FDirectory* root_directory, struct FDirectory* file, char* search_file)
 {
   unsigned char buf[DEFAULT_BLOCK_SIZE];
   ///DIRECTORY
@@ -22,7 +27,10 @@ void read_root_directory(FILE *fp, struct FDirectory* root_directory, char* sear
       if((*mask&DIRECTORY_ENTRY_USED)==DIRECTORY_ENTRY_USED)
       {
         //skip first block info
-        pointer+=8;
+        uint32_t* first_block = (uint32_t*)&buf[pointer];
+        pointer+=4;
+        uint32_t* blocks_num = (uint32_t*)&buf[pointer];
+        pointer+=4;
         uint32_t* file_size = (uint32_t*)&buf[pointer];
         pointer+=18;
         //skip creation date
@@ -31,11 +39,19 @@ void read_root_directory(FILE *fp, struct FDirectory* root_directory, char* sear
         for(int k=0; k<31; k++)
           file_name[k] =(char)*((uint8_t*)&buf[pointer++]);
         pointer+=6;
-
-        //file_size = ntohl(&file_size);
+       
+        file->size = *file_size;
+        file->size = ntohl(*file_size);
+        file->first_block = ntohl(*first_block);
+        file->blocks_num = ntohl(*blocks_num);
         if(strcmp(file_name, search_file)==0)
         {
           printf("%30s\n", file_name);
+          copy_file(fp, search_file, file);
+        }
+        else
+        {
+          //printf("File not found");
         }
       }
     }
@@ -46,6 +62,8 @@ int main ( int argc, char *argv[] )
 {
   char *disk_image;
   root_directory = (struct FDirectory*)malloc(sizeof(root_directory));
+  struct FDirectory *current_file;
+  current_file = (struct FDirectory*)malloc(sizeof(current_file));
 
   if(argc != 3)
 
@@ -61,7 +79,7 @@ int main ( int argc, char *argv[] )
   fp = fopen(disk_image, "rb");
   root_directory->first_block = get_rootdir_start(fp);
   root_directory->blocks_num = get_rootdir_blocks(fp);
-  read_root_directory(fp, root_directory, search_file);
+  read_root_directory(fp, root_directory, current_file, search_file);
 
   fclose(fp);
 };
