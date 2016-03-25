@@ -17,11 +17,11 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
     fseek(fp, file->first_block*DEFAULT_BLOCK_SIZE, SEEK_SET);
     fread(buf, 512, 1, fp);
     int pointer = 0;
-    for(int j=0; j<7; j++)
+    for(int j=0; j<file->size; j++)
     {
       uint8_t* current_byte = (uint8_t*)&buf[pointer]; 
-      pointer+=8;
-      fwrite(current_byte, 1, sizeof(current_byte), new_file);
+      pointer++;
+      fwrite(current_byte, 1, 1, new_file);
     }
   }
 
