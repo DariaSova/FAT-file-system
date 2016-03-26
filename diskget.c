@@ -10,21 +10,91 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
   FILE* new_file = fopen(file_name, "wb");
   unsigned char buf[DEFAULT_BLOCK_SIZE];
 
-  //go through all the blocks
-  for(int i=0; i<file->blocks_num; i++)
-  {
-    //read the block
-    fseek(fp, file->first_block*DEFAULT_BLOCK_SIZE, SEEK_SET);
-    fread(buf, 512, 1, fp);
-    int pointer = 0;
-    for(int j=0; j<file->size; j++)
-    {
-      uint8_t* current_byte = (uint8_t*)&buf[pointer]; 
-      pointer++;
-      fwrite(current_byte, 1, 1, new_file);
-    }
-  }
+  uint32_t current_block;
+  current_block = file->first_block;
+  int movePointer = file->first_block;
+ for(int i=0; i<file->blocks_num; i++)
+ {
 
+   fseek(fp, (movePointer)*DEFAULT_BLOCK_SIZE, SEEK_SET);
+   fread(buf, 512, 1, fp);
+   int pointer = 0;
+
+   uint8_t* current_byte; 
+            //int movePointer;
+            movePointer = (int)(0x01000000);
+            current_byte = (uint8_t*)&buf[pointer++];
+            fwrite(current_byte, 1, 1, new_file);
+            movePointer += (int)(*current_byte * 0x010000);
+            current_byte = (uint8_t*)&buf[pointer++];
+            fwrite(current_byte, 1, 1, new_file);
+            movePointer += (int)(*current_byte * 0x0100);
+            current_byte = (uint8_t*)&buf[pointer++];
+            fwrite(current_byte, 1, 1, new_file);
+            movePointer += (int)(*current_byte);
+            current_byte = (uint8_t*)&buf[pointer++];
+            fwrite(current_byte, 1, 1, new_file);
+            printf("pointer: %d, %d\n", pointer, movePointer);
+
+   //uint32_t* next = (uint32_t*)&buf[pointer];
+   //pointer+=4;
+   //write
+   //convert
+   //fwrite(next, 1, 4, new_file);
+
+   for(int j=0; j<508; j++)
+   {
+     current_byte = (uint8_t*)&buf[pointer]; 
+     pointer++;
+     fwrite(current_byte, 1, 1, new_file);
+   }
+
+   //printf("NEXT BLOCK: %iPOinter: %d\n", current_block, pointer);
+   if(i==(file->blocks_num-1))
+   {
+     //uint32_t* current_4byte = (uint32_t*)&buf[pointer];
+     //fwrite(current_4byte, 4, 1, new_file);
+     printf("\nDONE!");
+     //pointer+=4;
+   }
+   else { 
+     //printf("POINTER: %d\n", pointer);
+
+   //current_block = movePointer;
+   //current_block = ntohl(current_block);
+   //current_block = *next;
+   printf("NEXT BLOCK: %i POinter: %d\n", movePointer, pointer);
+
+     //printf("POinter: %d\n", pointer);
+     //fseek(fp, current_block*DEFAULT_BLOCK_SIZE, SEEK_SET);
+
+     // printf("NEXT BLOCK: %d\n", ntohl(*next));
+
+     /*     //printf("POINTER: %d\n", pointer);
+            int movePointer;
+            movePointer = (int)(*current_byte * 0x01000000);
+            current_byte = (uint8_t*)&buf[pointer++];
+            fwrite(current_byte, 1, 1, new_file);
+            movePointer += (int)(*current_byte * 0x010000);
+            current_byte = (uint8_t*)&buf[pointer++];
+            fwrite(current_byte, 1, 1, new_file);
+            movePointer += (int)(*current_byte * 0x0100);
+            current_byte = (uint8_t*)&buf[pointer++];
+            fwrite(current_byte, 1, 1, new_file);
+            movePointer += (int)(*current_byte);
+            current_byte = (uint8_t*)&buf[pointer++];
+            fwrite(current_byte, 1, 1, new_file);
+            printf("pointer: %d, %d\n", pointer, movePointer);
+
+            current_block = movePointer;
+            printf("NEXT BLOCK: %d\n", movePointer);
+            */
+
+
+
+   }
+ }
+ fclose(new_file);
 };
 
 void read_root_directory(FILE *fp, struct FDirectory* root_directory, struct FDirectory* file, char* search_file)
