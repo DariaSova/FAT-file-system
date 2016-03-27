@@ -12,6 +12,7 @@ struct FAT {
   uint32_t free_blocks;
   uint32_t reserved_blocks;
   uint32_t allocated_blocks;
+  int* entries;
 };
 
 struct FDirectory {

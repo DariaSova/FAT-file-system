@@ -54,6 +54,7 @@ uint32_t get_rootdir_blocks(FILE *fp)
 void read_FAT(FILE *fp)
 {
   unsigned char buf[DEFAULT_BLOCK_SIZE];
+  FAT->entries = (int*)malloc(sizeof(FAT->entries)*FAT->blocks_num*FAT_ENTRY_PER_BLOCK);
 
   FAT->free_blocks = 0;
   FAT->reserved_blocks = 0;
@@ -83,6 +84,7 @@ void read_FAT(FILE *fp)
           FAT->allocated_blocks++;
         break;
       }
+      FAT->entries[i*FAT_ENTRY_PER_BLOCK+j] = result;
       pointer+=FAT_ENTRY_SIZE;
     }
   }

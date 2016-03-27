@@ -4,23 +4,37 @@
 #include "fat.h"
 #include "disk.h"
 
+int block(int entry)
+{
+  if(entry%127==0)
+    return entry/127 -1;
+  return entry/127;
+};
+
+int fat_entry(int entry)
+{
+  return entry - block(entry)*127;
+};
+
 void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
 {
   printf("File name: %s, First: %d, Size: %i, Blocks num: %i\n", file_name, file->first_block, file->size, file->blocks_num);
   FILE* new_file = fopen(file_name, "wb");
   unsigned char buf[DEFAULT_BLOCK_SIZE];
 
-  int current_block;
+  int full_blocks_num = file->size/DEFAULT_BLOCK_SIZE;
+  int rem_bytes = file->size%DEFAULT_BLOCK_SIZE;
+  uint32_t current_block;
   current_block = file->first_block;
+  uint8_t* current_byte; 
 
-  for(int i=0; i<file->blocks_num; i++)
+  for(int i=0; i<full_blocks_num; i++)
   {
 
-    fseek(fp, (current_block)*DEFAULT_BLOCK_SIZE, SEEK_SET);
+    fseek(fp, (int)((current_block)*DEFAULT_BLOCK_SIZE), SEEK_SET);
     fread(buf, 512, 1, fp);
     int pointer = 0;
 
-    uint8_t* current_byte; 
     uint32_t* next_block = (uint32_t*)&buf[pointer];
     pointer+=4;
     fwrite(next_block, 1, 4, new_file);
@@ -38,9 +52,44 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
     }
     else 
     { 
-      current_block = ntohl(*next_block);
-      printf("NEXT BLOCK: %i POinter: %d\n", current_block, pointer);
+      //current_block  = ntohl(*next_block);
+  //current_block--;
+  uint32_t full_fat = block(current_block);
+  uint32_t rem_fat = fat_entry(current_block);
+  //printf("\n full_fat: %d, remaining: %d\n", full_fat, rem_fat); 
+  full_fat++;
+  //rem_fat--;
+  if(full_fat>1)
+    rem_fat--;
+    
+  
+  //printf("\n full_fat: %d, remaining: %d\n", full_fat, rem_fat); 
+  //int ptr = (rem_fat)*4; 
+  ////int next_index = 512*1+file->first_block*4;
+  //fseek(fp, full_fat*DEFAULT_BLOCK_SIZE, SEEK_SET);
+  //fread(buf, 512, 1, fp);
+  //uint32_t* next = (uint32_t*)&buf[ptr];
+  //current_block = ntohl(*next);
+
+  unsigned char buf2[512*120];
+  fseek(fp, 1*DEFAULT_BLOCK_SIZE, SEEK_SET);
+  fread(buf2, 512, 120, fp);
+  uint32_t* next2 = (uint32_t*)&buf2[current_block*4];
+  current_block = ntohl(*next2);
+  printf("NEXT BLOCK: %d POinter: %d\n", current_block, pointer);
     }
+  }
+
+  //copy remaining bytes
+  if(rem_bytes>0)
+  {
+    fseek(fp, (current_block)*DEFAULT_BLOCK_SIZE, SEEK_SET);
+    fread(buf, 512, 1, fp);
+      for(int j=0; j<rem_bytes; j++)
+      {
+        current_byte = (uint8_t*)&buf[j]; 
+        fwrite(current_byte, 1, 1, new_file);
+      }
   }
   fclose(new_file);
 };
@@ -100,6 +149,7 @@ int main ( int argc, char *argv[] )
   root_directory = (struct FDirectory*)malloc(sizeof(root_directory));
   struct FDirectory *current_file;
   current_file = (struct FDirectory*)malloc(sizeof(current_file));
+  //FAT = (struct FAT*)malloc(sizeof(FAT));
 
   if(argc != 3)
 
@@ -115,6 +165,7 @@ int main ( int argc, char *argv[] )
   fp = fopen(disk_image, "rb");
   root_directory->first_block = get_rootdir_start(fp);
   root_directory->blocks_num = get_rootdir_blocks(fp);
+  //read_FAT(fp);  
   read_root_directory(fp, root_directory, current_file, search_file);
 
   fclose(fp);
