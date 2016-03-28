@@ -4,16 +4,18 @@
 #include "fat.h"
 #include "disk.h"
 
-int block(int entry)
+int fat_block(int entry)
 {
   if(entry%127==0)
-    return entry/127 -1;
+    return entry/127-1;
   return entry/127;
 };
 
 int fat_entry(int entry)
 {
-  return entry - block(entry)*127;
+  if(entry%127==0)
+    return 127;
+  return entry - fat_block(entry)*128;
 };
 
 void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
@@ -21,12 +23,18 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
   printf("File name: %s, First: %d, Size: %i, Blocks num: %i\n", file_name, file->first_block, file->size, file->blocks_num);
   FILE* new_file = fopen(file_name, "wb");
   unsigned char buf[DEFAULT_BLOCK_SIZE];
+  //unsigned char fat_buf[DEFAULT_BLOCK_SIZE];
 
   int full_blocks_num = file->size/DEFAULT_BLOCK_SIZE;
   int rem_bytes = file->size%DEFAULT_BLOCK_SIZE;
   uint32_t current_block;
   current_block = file->first_block;
   uint8_t* current_byte; 
+
+  //read FAT
+  unsigned char buf2[DEFAULT_BLOCK_SIZE*120];
+  fseek(fp, DEFAULT_BLOCK_SIZE, SEEK_SET);
+  fread(buf2, DEFAULT_BLOCK_SIZE, 120, fp);
 
   for(int i=0; i<full_blocks_num; i++)
   {
@@ -35,11 +43,11 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
     fread(buf, 512, 1, fp);
     int pointer = 0;
 
-    uint32_t* next_block = (uint32_t*)&buf[pointer];
-    pointer+=4;
-    fwrite(next_block, 1, 4, new_file);
+    //uint32_t* next_block = (uint32_t*)&buf[pointer];
+    //pointer+=4;
+    //fwrite(next_block, 1, 4, new_file);
 
-    for(int j=0; j<508; j++)
+    for(int j=0; j<512; j++)
     {
       current_byte = (uint8_t*)&buf[pointer]; 
       pointer++;
@@ -48,48 +56,56 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
 
     if(i==(file->blocks_num-1))
     {
+      printf("\nCOUNTER: %d\n", i);
+      printf("NEXT BLOCK: %d POinter: %d\n", current_block, pointer);
       printf("\nDONE!");
     }
     else 
     { 
-      //current_block  = ntohl(*next_block);
-  //current_block--;
-  uint32_t full_fat = block(current_block);
-  uint32_t rem_fat = fat_entry(current_block);
-  //printf("\n full_fat: %d, remaining: %d\n", full_fat, rem_fat); 
-  full_fat++;
-  //rem_fat--;
-  if(full_fat>1)
-    rem_fat--;
-    
-  
-  //printf("\n full_fat: %d, remaining: %d\n", full_fat, rem_fat); 
-  //int ptr = (rem_fat)*4; 
-  ////int next_index = 512*1+file->first_block*4;
-  //fseek(fp, full_fat*DEFAULT_BLOCK_SIZE, SEEK_SET);
-  //fread(buf, 512, 1, fp);
-  //uint32_t* next = (uint32_t*)&buf[ptr];
-  //current_block = ntohl(*next);
+/*
+      uint32_t full_fat = fat_block(current_block);
+      uint32_t rem_fat = fat_entry(current_block);
+      //printf("\n full_fat: %d, remaining: %d\n", full_fat, rem_fat); 
+      full_fat++;
+      //rem_fat--;
+      //if(full_fat>1)
+      //  rem_fat-=2;
+      if(current_block==0)
+      {
+        full_fat =1;
+        rem_fat=0;
+      }
 
-  unsigned char buf2[512*120];
-  fseek(fp, 1*DEFAULT_BLOCK_SIZE, SEEK_SET);
-  fread(buf2, 512, 120, fp);
-  uint32_t* next2 = (uint32_t*)&buf2[current_block*4];
-  current_block = ntohl(*next2);
-  printf("NEXT BLOCK: %d POinter: %d\n", current_block, pointer);
+
+      printf("\n full_fat: %d, remaining: %d\n", full_fat, rem_fat); 
+      int ptr = (rem_fat); 
+      fseek(fp, full_fat*DEFAULT_BLOCK_SIZE, SEEK_SET);
+      fread(fat_buf, 512, 1, fp);
+      uint32_t* next = (uint32_t*)&fat_buf[ptr*4];
+      current_block = ntohl(*next);
+      printf("NEXT BLOCK: %d POinter: %d\n", current_block, pointer);
+*/
+
+
+      ////works here
+      uint32_t* next2 = (uint32_t*)&buf2[current_block*4];
+      current_block = ntohl(*next2);
+      printf("NEXT BLOCK: %d POinter: %d\n", current_block, pointer);
+
     }
   }
 
   //copy remaining bytes
   if(rem_bytes>0)
   {
+    printf("\nOOOOps");
     fseek(fp, (current_block)*DEFAULT_BLOCK_SIZE, SEEK_SET);
     fread(buf, 512, 1, fp);
-      for(int j=0; j<rem_bytes; j++)
-      {
-        current_byte = (uint8_t*)&buf[j]; 
-        fwrite(current_byte, 1, 1, new_file);
-      }
+    for(int j=0; j<rem_bytes; j++)
+    {
+      current_byte = (uint8_t*)&buf[j]; 
+      fwrite(current_byte, 1, 1, new_file);
+    }
   }
   fclose(new_file);
 };
