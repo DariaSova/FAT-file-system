@@ -6,16 +6,26 @@
 
 int fat_block(int entry)
 {
-  if(entry%127==0)
-    return entry/127-1;
-  return entry/127;
+  if(entry<=127)
+    return 0;
+  else
+    if((entry-127)%128==0)
+      return (entry-127)/128;
+    else
+      return (entry-127)/128+1;
 };
 
 int fat_entry(int entry)
 {
-  if(entry%127==0)
+  int result;
+  if(entry<=127)
+    return entry;
+  else
+    result = entry-127 - ((entry-127)/128)*128;
+  if(result>0)
+    return result-1;
+  else
     return 127;
-  return entry - fat_block(entry)*128;
 };
 
 void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
@@ -23,7 +33,7 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
   printf("File name: %s, First: %d, Size: %i, Blocks num: %i\n", file_name, file->first_block, file->size, file->blocks_num);
   FILE* new_file = fopen(file_name, "wb");
   unsigned char buf[DEFAULT_BLOCK_SIZE];
-  //unsigned char fat_buf[DEFAULT_BLOCK_SIZE];
+  unsigned char fat_buf[DEFAULT_BLOCK_SIZE];
 
   int full_blocks_num = file->size/DEFAULT_BLOCK_SIZE;
   int rem_bytes = file->size%DEFAULT_BLOCK_SIZE;
@@ -39,7 +49,7 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
   for(int i=0; i<full_blocks_num; i++)
   {
 
-    fseek(fp, (int)((current_block)*DEFAULT_BLOCK_SIZE), SEEK_SET);
+    fseek(fp, (long)((current_block)*DEFAULT_BLOCK_SIZE), SEEK_SET);
     fread(buf, 512, 1, fp);
     int pointer = 0;
 
@@ -62,7 +72,7 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
     }
     else 
     { 
-/*
+
       uint32_t full_fat = fat_block(current_block);
       uint32_t rem_fat = fat_entry(current_block);
       //printf("\n full_fat: %d, remaining: %d\n", full_fat, rem_fat); 
@@ -77,21 +87,22 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
       }
 
 
+
       printf("\n full_fat: %d, remaining: %d\n", full_fat, rem_fat); 
-      int ptr = (rem_fat); 
-      fseek(fp, full_fat*DEFAULT_BLOCK_SIZE, SEEK_SET);
+      int ptr = (long)(rem_fat); 
+      fseek(fp, (long)full_fat*DEFAULT_BLOCK_SIZE, SEEK_SET);
       fread(fat_buf, 512, 1, fp);
       uint32_t* next = (uint32_t*)&fat_buf[ptr*4];
       current_block = ntohl(*next);
       printf("NEXT BLOCK: %d POinter: %d\n", current_block, pointer);
-*/
 
 
+/*
       ////works here
       uint32_t* next2 = (uint32_t*)&buf2[current_block*4];
       current_block = ntohl(*next2);
       printf("NEXT BLOCK: %d POinter: %d\n", current_block, pointer);
-
+*/
     }
   }
 
@@ -99,7 +110,7 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
   if(rem_bytes>0)
   {
     printf("\nOOOOps");
-    fseek(fp, (current_block)*DEFAULT_BLOCK_SIZE, SEEK_SET);
+    fseek(fp, (long)(current_block)*DEFAULT_BLOCK_SIZE, SEEK_SET);
     fread(buf, 512, 1, fp);
     for(int j=0; j<rem_bytes; j++)
     {
