@@ -4,35 +4,11 @@
 #include "fat.h"
 #include "disk.h"
 
-int fat_block(int entry)
-{
-  if(entry<=127)
-    return 0;
-  else
-    if((entry-127)%128==0)
-      return (entry-127)/128;
-    else
-      return (entry-127)/128+1;
-};
-
-int fat_entry(int entry)
-{
-  int result;
-  if(entry<=127)
-    return entry;
-  else
-    result = entry-127 - ((entry-127)/128)*128;
-  if(result>0)
-    return result-1;
-  else
-    return 127;
-};
-
 void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
 {
   FILE* new_file = fopen(file_name, "wb");
   unsigned char buf[DEFAULT_BLOCK_SIZE];
-  unsigned char fat_buf[DEFAULT_BLOCK_SIZE];
+  unsigned char fat_buf[4];
 
   int full_blocks_num = file->size/DEFAULT_BLOCK_SIZE;
   int rem_bytes = file->size%DEFAULT_BLOCK_SIZE;
@@ -59,39 +35,16 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
       printf("Done.\n");
     else
     { 
-
-      uint32_t full_fat = fat_block(current_block);
-      uint32_t rem_fat = fat_entry(current_block);
-
-      full_fat++;
-      if(current_block==0)
-      {
-        full_fat =1;
-        rem_fat=0;
-      }
-
-      int ptr = (long)(rem_fat); 
-      fseek(fp, (long)full_fat*DEFAULT_BLOCK_SIZE, SEEK_SET);
-      fread(fat_buf, 512, 1, fp);
-      uint32_t* next = (uint32_t*)&fat_buf[ptr*4];
+      fseek(fp, (long)1*DEFAULT_BLOCK_SIZE+current_block*4, SEEK_SET);
+      fread(fat_buf, 4, 1, fp);
+      uint32_t* next = (uint32_t*)&fat_buf[0];
       current_block = ntohl(*next);
-
-      /*
-      ////works here
-      unsigned char buf2[DEFAULT_BLOCK_SIZE*120];
-      fseek(fp, DEFAULT_BLOCK_SIZE, SEEK_SET);
-      fread(buf2, DEFAULT_BLOCK_SIZE, 120, fp);
-      uint32_t* next2 = (uint32_t*)&buf2[current_block*4];
-      current_block = ntohl(*next2);
-      printf("NEXT BLOCK: %d POinter: %d\n", current_block, pointer);
-      */
     }
   }
 
   //copy remaining bytes
   if(rem_bytes>0)
   {
-    printf("\nOOOOps");
     fseek(fp, (long)(current_block)*DEFAULT_BLOCK_SIZE, SEEK_SET);
     fread(buf, 512, 1, fp);
     for(int j=0; j<rem_bytes; j++)
