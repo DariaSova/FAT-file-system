@@ -30,7 +30,6 @@ int fat_entry(int entry)
 
 void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
 {
-  printf("File name: %s, First: %d, Size: %i, Blocks num: %i\n", file_name, file->first_block, file->size, file->blocks_num);
   FILE* new_file = fopen(file_name, "wb");
   unsigned char buf[DEFAULT_BLOCK_SIZE];
   unsigned char fat_buf[DEFAULT_BLOCK_SIZE];
@@ -41,10 +40,6 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
   current_block = file->first_block;
   uint8_t* current_byte; 
 
-  //read FAT
-  unsigned char buf2[DEFAULT_BLOCK_SIZE*120];
-  fseek(fp, DEFAULT_BLOCK_SIZE, SEEK_SET);
-  fread(buf2, DEFAULT_BLOCK_SIZE, 120, fp);
 
   for(int i=0; i<full_blocks_num; i++)
   {
@@ -52,10 +47,6 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
     fseek(fp, (long)((current_block)*DEFAULT_BLOCK_SIZE), SEEK_SET);
     fread(buf, 512, 1, fp);
     int pointer = 0;
-
-    //uint32_t* next_block = (uint32_t*)&buf[pointer];
-    //pointer+=4;
-    //fwrite(next_block, 1, 4, new_file);
 
     for(int j=0; j<512; j++)
     {
@@ -65,44 +56,35 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
     }
 
     if(i==(file->blocks_num-1))
-    {
-      printf("\nCOUNTER: %d\n", i);
-      printf("NEXT BLOCK: %d POinter: %d\n", current_block, pointer);
-      printf("\nDONE!");
-    }
-    else 
+      printf("Done.\n");
+    else
     { 
 
       uint32_t full_fat = fat_block(current_block);
       uint32_t rem_fat = fat_entry(current_block);
-      //printf("\n full_fat: %d, remaining: %d\n", full_fat, rem_fat); 
+
       full_fat++;
-      //rem_fat--;
-      //if(full_fat>1)
-      //  rem_fat-=2;
       if(current_block==0)
       {
         full_fat =1;
         rem_fat=0;
       }
 
-
-
-      printf("\n full_fat: %d, remaining: %d\n", full_fat, rem_fat); 
       int ptr = (long)(rem_fat); 
       fseek(fp, (long)full_fat*DEFAULT_BLOCK_SIZE, SEEK_SET);
       fread(fat_buf, 512, 1, fp);
       uint32_t* next = (uint32_t*)&fat_buf[ptr*4];
       current_block = ntohl(*next);
-      printf("NEXT BLOCK: %d POinter: %d\n", current_block, pointer);
 
-
-/*
+      /*
       ////works here
+      unsigned char buf2[DEFAULT_BLOCK_SIZE*120];
+      fseek(fp, DEFAULT_BLOCK_SIZE, SEEK_SET);
+      fread(buf2, DEFAULT_BLOCK_SIZE, 120, fp);
       uint32_t* next2 = (uint32_t*)&buf2[current_block*4];
       current_block = ntohl(*next2);
       printf("NEXT BLOCK: %d POinter: %d\n", current_block, pointer);
-*/
+      */
     }
   }
 
@@ -124,6 +106,7 @@ void copy_file(FILE *fp, char* file_name, struct FDirectory* file)
 void read_root_directory(FILE *fp, struct FDirectory* root_directory, struct FDirectory* file, char* search_file)
 {
   unsigned char buf[DEFAULT_BLOCK_SIZE];
+  int found = 0;
   ///DIRECTORY
   for(int i=root_directory->first_block; i< root_directory->first_block+root_directory->blocks_num; i++)
   {
@@ -158,16 +141,15 @@ void read_root_directory(FILE *fp, struct FDirectory* root_directory, struct FDi
         file->blocks_num = ntohl(*blocks_num);
         if(strcmp(file_name, search_file)==0)
         {
-          printf("%30s\n", file_name);
+          found = 1;
+          printf("Copying file %s...\n", file_name);
           copy_file(fp, search_file, file);
-        }
-        else
-        {
-          //printf("File not found");
         }
       }
     }
   }
+  if(!found)
+    printf("File not found\n");
 };
 
 int main ( int argc, char *argv[] )
@@ -176,7 +158,6 @@ int main ( int argc, char *argv[] )
   root_directory = (struct FDirectory*)malloc(sizeof(root_directory));
   struct FDirectory *current_file;
   current_file = (struct FDirectory*)malloc(sizeof(current_file));
-  //FAT = (struct FAT*)malloc(sizeof(FAT));
 
   if(argc != 3)
 
