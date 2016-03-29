@@ -31,6 +31,7 @@ void free_entries(FILE *fp, struct FAT *FAT)
   current=root;
   unsigned char buf[DEFAULT_BLOCK_SIZE];
   //for every entry in a FAT block
+  int fat_entry =0;
   for(int i= FAT->first_block; i<= FAT->blocks_num; i++)
   {
     fseek(fp, i*DEFAULT_BLOCK_SIZE, SEEK_SET);
@@ -47,7 +48,7 @@ void free_entries(FILE *fp, struct FAT *FAT)
       switch(result)
       {
         case FAT_FREE:
-          current->entry = pointer/4;
+          current->entry = fat_entry;
           //printf("FREE: %i  %d ", result, current->entry);
           current->next=next;
           current=next;
@@ -55,6 +56,7 @@ void free_entries(FILE *fp, struct FAT *FAT)
           break;
       }
       pointer+=FAT_ENTRY_SIZE;
+      fat_entry++;
     }
   }
 };
@@ -84,8 +86,6 @@ void write_file_into_dir(FILE *fp, char *file_name, int blocks_num, int file_siz
   year = ntohs(year);
   fwrite(&year, 2, 1, fp);
 
-  printf("DATA: %d, %i", t_now.tm_year+1900, t_now.tm_mon);
-  
   //creation time
   uint8_t month = (uint8_t)(t_now.tm_mon+1);
   fwrite(&month, 1, 1, fp);
@@ -153,7 +153,6 @@ void find_dir_block(FILE *fp)
         dir_block = i;
         dir_entry =j;
         found =1;
-        printf("\nDIRECTORY: %d, %d", i, j);
         break;
       }
     }
@@ -168,11 +167,52 @@ void find_free_fat_entries(char* file)
   FAT = (struct FAT*)malloc(sizeof(FAT));
   FAT->first_block = get_FAT_start(fp);
   FAT->blocks_num = get_FAT_blocks(fp);
-  printf("FAT starts: %d, num: %d\n", FAT->first_block, FAT->blocks_num);
+  //printf("FAT starts: %d, num: %d\n", FAT->first_block, FAT->blocks_num);
   root = (struct node *) malloc( sizeof(struct node) );
   free_entries(fp, FAT);
-  printf("FREEFRT: %d\n", root->entry);
   fclose(fp);
+};
+
+void write_file_into_FAT (FILE *fp, char *file_name, int file_size)
+{
+  FILE *file;
+  file = fopen(file_name, "rb");
+  int full_blocks_num = file_size/DEFAULT_BLOCK_SIZE;
+  //int rem_bytes = file_size%DEFAULT_BLOCK_SIZE;
+  struct node *current_free;
+  current_free = (struct node *) malloc( sizeof(struct node) );
+  current_free=root;
+  uint32_t current_FAT = current_free->entry;
+  uint8_t* current_byte; 
+  unsigned char buf[DEFAULT_BLOCK_SIZE];
+
+  for(int i=0; i<full_blocks_num; i++)
+  {
+    fseek(fp, (long)((current_FAT)*DEFAULT_BLOCK_SIZE), SEEK_SET);
+    fseek(fp, (long)(i*DEFAULT_BLOCK_SIZE), SEEK_SET);
+    fread(buf, 512, 1, file);
+    int pointer = 0;
+
+    for(int j=0; j<512; j++)
+    {
+      current_byte = (uint8_t*)&buf[pointer]; 
+      pointer++;
+      fwrite(current_byte, 1, 1, fp);
+    }
+    if(i==(full_blocks_num-1))
+      printf("Done.\n");
+    else
+    { 
+      //get into the fat entry
+      fseek(fp, (long)1*DEFAULT_BLOCK_SIZE+current_FAT*4, SEEK_SET);
+      uint32_t next = (uint32_t)current_free->next->entry;
+      current_free=current_free->next;
+      fwrite(&next, 4, 1, fp);
+      //current_block = ntohl(*next);
+      current_FAT=next;
+    }
+  }
+  fclose(file);
 };
 
 int blocks_needed(double size)
@@ -195,9 +235,9 @@ int main ( int argc, char *argv[] )
   int file=open(file_name, O_RDONLY);
 
   double f_size = file_size(file);
-  printf("File Size: \t%f bytes\n", f_size);
+  //printf("File Size: \t%f bytes\n", f_size);
   long blocks_number = blocks_needed(f_size);
-  printf("File Blocks: \t%ld blocks needed\n", blocks_number);
+  //printf("File Blocks: \t%ld blocks needed\n", blocks_number);
   find_free_fat_entries(disk_image);
   FILE *fp;
   fp = fopen(disk_image, "rb");
@@ -205,6 +245,7 @@ int main ( int argc, char *argv[] )
   fclose(fp);
   fp = fopen(disk_image, "r+");
   write_file_into_dir(fp, file_name, blocks_number, f_size);
+  //write_file_into_FAT (fp, file_name, f_size);
 
   fclose(fp);
   close(file);

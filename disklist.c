@@ -56,7 +56,7 @@ void read_root_directory(FILE *fp, struct FDirectory* root_directory)
 
         printf("%10d ", ntohl(*file_size));
         printf("%30s ", file_name);
-        printf("%d/%02X/%02X %i:%i:%02i\n", htons(*year), *month, *day, *hour, *minute, *seconds);
+        printf("%d/%02X/%02X %i:%02i:%02i\n", htons(*year), *month, *day, *hour, *minute, *seconds);
       }
     }
   }
